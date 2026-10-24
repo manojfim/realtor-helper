@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Realtor Helper — Homes for sale</title>
-<meta name="description" content="Browse homes for sale, compare prices, and contact the listing realtor.">
+<title>Realtor Helper — Properties for sale</title>
+<meta name="description" content="Browse properties for sale, compare prices, and contact the listing realtor.">
 <style>
   :root{--bg:#f7f8fa;--card:#fff;--ink:#1a2332;--muted:#667085;--brand:#0f766e;--accent:#e11d48;--line:#e4e7ec}
   *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
@@ -49,7 +49,7 @@
 <header>
   <strong>🏡 Realtor Helper</strong>
   <nav>
-    <button class="ghost" data-action="view" data-view="browse">Homes</button>
+    <button class="ghost" data-action="view" data-view="browse">Properties</button>
     <button class="ghost" data-action="view" data-view="dashboard">For realtors</button>
     <span id="authArea"></span>
   </nav>
@@ -60,8 +60,8 @@
   <!-- CUSTOMER HOME / BROWSE -->
   <section id="view-browse">
     <div class="hero">
-      <h1>Find your next home</h1>
-      <p>Search homes, compare at a glance, and contact the realtor directly.</p>
+      <h1>Find your next property</h1>
+      <p>Search properties, compare at a glance, and contact the realtor directly.</p>
       <div class="searchbar">
         <input id="search" aria-label="Search city, address, or ZIP" placeholder="City, address, or ZIP">
         <select id="typeFilter" aria-label="Property type"><option value="">All types</option><option>House</option><option>Apartment</option><option>Condo</option><option>Townhome</option><option>Land</option><option>Multi-family</option></select>
@@ -74,7 +74,7 @@
     <div class="steps">
       <div class="step"><div class="num">🔍</div><b>Search</b><div class="meta">Filter by place, price, and size.</div></div>
       <div class="step"><div class="num">📊</div><b>Compare</b><div class="meta">Price, size, and monthly estimate side by side.</div></div>
-      <div class="step"><div class="num">✉️</div><b>Contact</b><div class="meta">Reach the listing realtor from the home page.</div></div>
+      <div class="step"><div class="num">✉️</div><b>Contact</b><div class="meta">Reach the listing realtor from the property page.</div></div>
     </div>
     <div class="filters" aria-label="Sort listings">
       <span><b id="resultCount"></b></span>
@@ -83,12 +83,12 @@
       </select>
     </div>
     <div id="browseGrid" class="grid"></div>
-    <p id="browseEmpty" class="hidden">No homes match that search yet.</p>
+    <p id="browseEmpty" class="hidden">No properties match that search yet.</p>
   </section>
 
   <!-- PROPERTY DETAIL -->
   <section id="view-property" class="hidden">
-    <button class="secondary" data-action="view" data-view="browse">← Back to homes</button>
+    <button class="secondary" data-action="view" data-view="browse">← Back to properties</button>
     <div id="propertyDetail" style="margin-top:16px"></div>
   </section>
 
@@ -116,7 +116,7 @@
       <h2 id="formTitle">Add a property</h2>
       <form id="propertyForm">
         <input type="hidden" id="editId">
-        <label>Listing title <input id="fTitle" required placeholder="e.g. Bright 4-bed home near the park"></label>
+        <label>Listing title <input id="fTitle" required placeholder="e.g. Bright 4-bed property near the park"></label>
         <div class="row">
           <label>Price (USD) <input id="fPrice" type="number" required min="0"></label>
           <label>Status <select id="fStatus"><option>Draft</option><option>For sale</option><option>Pending</option><option>Sold</option></select></label>
@@ -193,8 +193,8 @@ let MODE = "demo";
 let authMode = "signin";
 const PLACEHOLDER_PHOTO = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80";
 const SAMPLES = [
-  {id:"sample-1",title:"Bright 4-bed home near the park",price:485000,address:"123 Maple Grove Drive",city:"Sampletown",state:"TX",zip:"75000",beds:4,baths:3,sqft:2380,type:"House",status:"For sale",description:"Open living area, large backyard, and a quiet street — great for families. Walk to the neighborhood park.",photo:"https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2018,parking:2}},
-  {id:"sample-2",title:"Modern 3-bed townhome, low maintenance",price:329000,address:"456 Oak Hollow Court",city:"Sampletown",state:"TX",zip:"75000",beds:3,baths:2.5,sqft:1680,type:"Townhome",status:"For sale",description:"Updated kitchen, private patio, and a two-car garage. Ideal first home or low-maintenance move.",photo:"https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2021,parking:2}},
+  {id:"sample-1",title:"Bright 4-bed property near the park",price:485000,address:"123 Maple Grove Drive",city:"Sampletown",state:"TX",zip:"75000",beds:4,baths:3,sqft:2380,type:"House",status:"For sale",description:"Open living area, large backyard, and a quiet street — great for families. Walk to the neighborhood park.",photo:"https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2018,parking:2}},
+  {id:"sample-2",title:"Modern 3-bed townhome, low maintenance",price:329000,address:"456 Oak Hollow Court",city:"Sampletown",state:"TX",zip:"75000",beds:3,baths:2.5,sqft:1680,type:"Townhome",status:"For sale",description:"Updated kitchen, private patio, and a two-car garage. Ideal first property or low-maintenance move.",photo:"https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2021,parking:2}},
   {id:"sample-3",title:"Buildable land on a quiet road",price:95000,address:"789 Country Road",city:"Sampletown",state:"TX",zip:"75000",beds:0,baths:0,sqft:null,type:"Land",status:"For sale",description:"Flat, cleared lot ready to build on, with road frontage.",photo:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{lotAcres:2.5,zoning:"Residential",utilities:"Water, electric",roadAccess:"Paved"}},
   {id:"sample-4",title:"Sunny 2-bed apartment in the city",price:249000,address:"101 Downtown Lane, Apt 12",city:"Sampletown",state:"TX",zip:"75000",beds:2,baths:1.5,sqft:1050,type:"Apartment",status:"For sale",description:"Bright apartment with a balcony, in-building laundry, and covered parking.",photo:"https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2015,parking:1,floor:3,totalFloors:8}},
   {id:"sample-5",title:"Stylish 1-bed condo near shops",price:189000,address:"202 Market Street, Unit 5",city:"Sampletown",state:"TX",zip:"75000",beds:1,baths:1,sqft:820,type:"Condo",status:"For sale",description:"Updated condo with a modern kitchen, steps from shops and cafes.",photo:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2019,parking:1}},
@@ -292,7 +292,7 @@ function renderMarketStats(){
   const avgPrice = avg(pub.map(l=>l.price));
   const avgSqft = avg(pub.filter(l=>l.sqft).map(l=>l.sqft));
   const avgPpsf = avg(pub.filter(l=>l.sqft).map(l=>l.price/l.sqft));
-  for(const [val, label] of [[String(pub.length), "Homes available"], [avgPrice ? money(Math.round(avgPrice)) : "—", "Average price"], [avgSqft ? Math.round(avgSqft).toLocaleString() + " sq ft" : "—", "Average size"], [avgPpsf ? "$" + Math.round(avgPpsf) + " / sq ft" : "—", "Average price / sq ft"]]){
+  for(const [val, label] of [[String(pub.length), "Properties available"], [avgPrice ? money(Math.round(avgPrice)) : "—", "Average price"], [avgSqft ? Math.round(avgSqft).toLocaleString() + " sq ft" : "—", "Average size"], [avgPpsf ? "$" + Math.round(avgPpsf) + " / sq ft" : "—", "Average price / sq ft"]]){
     const s = el("div", "stat"); s.appendChild(el("b", "", val)); s.appendChild(el("span", "", label)); box.appendChild(s);
   }
 }
@@ -309,7 +309,7 @@ function renderBrowse(){
   else if(sort === "price-asc") shown.sort((a,b)=>a.price-b.price);
   else if(sort === "price-desc") shown.sort((a,b)=>b.price-a.price);
   else if(sort === "sqft-desc") shown.sort((a,b)=>(b.sqft||0)-(a.sqft||0));
-  document.getElementById("resultCount").textContent = shown.length + (shown.length === 1 ? " home" : " homes");
+  document.getElementById("resultCount").textContent = shown.length + (shown.length === 1 ? " property" : " properties");
   document.getElementById("browseEmpty").classList.toggle("hidden", shown.length>0);
   renderMarketStats();
   const grid = document.getElementById("browseGrid"); grid.innerHTML = "";
@@ -322,7 +322,7 @@ function renderBrowse(){
     card.appendChild(est);
     const title = el("div"); const st = document.createElement("strong"); st.textContent = l.title; title.appendChild(st); card.appendChild(title);
     card.appendChild(el("div", "meta", cardMeta(l)));
-    const btn = el("button"); btn.dataset.action = "open"; btn.dataset.id = l.id; btn.textContent = "View home"; card.appendChild(btn);
+    const btn = el("button"); btn.dataset.action = "open"; btn.dataset.id = l.id; btn.textContent = "View property"; card.appendChild(btn);
     grid.appendChild(card);
   }
 }
@@ -341,7 +341,7 @@ function renderProperty(l){
   const left = el("div");
   const img = document.createElement("img"); img.className = "thumb"; img.src = safePhotoUrl(l.photo); img.alt = l.title; left.appendChild(img);
   const h2 = el("h2"); h2.style.margin = "16px 0 4px"; h2.textContent = l.title; left.appendChild(h2);
-  if(String(l.id).startsWith("sample-")){ const sb = el("div"); const sbb = el("span", "badge"); sbb.textContent = "Sample listing — not a real home for sale"; sb.appendChild(sbb); left.appendChild(sb); }
+  if(String(l.id).startsWith("sample-")){ const sb = el("div"); const sbb = el("span", "badge"); sbb.textContent = "Sample listing — not a real property for sale"; sb.appendChild(sbb); left.appendChild(sb); }
   left.appendChild(el("div", "price", money(l.price)));
   left.appendChild(el("p", "meta", `${l.address}, ${l.city}, ${l.state} ${l.zip} · ${l.type}`));
   const tiles = el("div", "tiles");
@@ -368,25 +368,25 @@ function renderProperty(l){
   const pub = publicListings();
   const avg = (arr) => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
   const avgPrice = avg(pub.map(x=>x.price)); const avgPpsf = avg(pub.filter(x=>x.sqft).map(x=>x.price/x.sqft)); const avgSqft = avg(pub.filter(x=>x.sqft).map(x=>x.sqft));
-  const comp = el("div", "card"); comp.appendChild(el("h3", "", "Compared with homes here"));
-  if(avgPrice) comp.appendChild(barRow("This home", money(l.price), avgPrice * 1.2));
+  const comp = el("div", "card"); comp.appendChild(el("h3", "", "Compared with properties here"));
+  if(avgPrice) comp.appendChild(barRow("This property", money(l.price), avgPrice * 1.2));
   if(avgPrice) comp.appendChild(barRow("Average price", money(Math.round(avgPrice)), avgPrice * 1.2));
-  if(ppsf && avgPpsf) comp.appendChild(barRow("This home / sq ft", "$" + ppsf, avgPpsf * 1.2));
+  if(ppsf && avgPpsf) comp.appendChild(barRow("This property / sq ft", "$" + ppsf, avgPpsf * 1.2));
   if(avgPpsf) comp.appendChild(barRow("Average / sq ft", "$" + Math.round(avgPpsf), avgPpsf * 1.2));
-  if(l.sqft && avgSqft) comp.appendChild(barRow("This home size", l.sqft.toLocaleString() + " sq ft", avgSqft * 1.2));
+  if(l.sqft && avgSqft) comp.appendChild(barRow("This property size", l.sqft.toLocaleString() + " sq ft", avgSqft * 1.2));
   left.appendChild(comp);
   wrap.appendChild(left);
   const aside = el("aside");
   const share = el("div", "card");
   if(isPublished(l)){
-    share.appendChild(el("h3", "", "Share this home"));
+    share.appendChild(el("h3", "", "Share this property"));
     const input = document.createElement("input"); input.id = "shareLink"; input.setAttribute("aria-label", "Share link"); input.value = url; input.readOnly = true; input.style.marginBottom = "10px"; share.appendChild(input);
     const copy = el("button"); copy.dataset.action = "copy-link"; copy.textContent = "Copy link"; share.appendChild(copy);
     const email = document.createElement("a"); email.className = "btn secondary"; email.style.cssText = "display:inline-block;margin-top:8px;text-decoration:none"; email.href = "mailto:?subject=" + encodeURIComponent(l.title) + "&body=" + encodeURIComponent(url); email.textContent = "Share by email"; share.appendChild(email);
     const sms = document.createElement("a"); sms.className = "btn secondary"; sms.style.cssText = "display:inline-block;margin-top:8px;text-decoration:none"; sms.href = "sms:?body=" + encodeURIComponent(l.title + " " + url); sms.textContent = "Share by text"; share.appendChild(sms);
   } else {
     share.appendChild(el("h3", "", "Not published yet"));
-    const pubBtn = el("button"); pubBtn.dataset.action = "publish"; pubBtn.dataset.id = l.id; pubBtn.textContent = "Publish this home"; share.appendChild(pubBtn);
+    const pubBtn = el("button"); pubBtn.dataset.action = "publish"; pubBtn.dataset.id = l.id; pubBtn.textContent = "Publish this property"; share.appendChild(pubBtn);
   }
   aside.appendChild(share);
   const mort = el("div", "card"); mort.style.marginTop = "16px";
@@ -409,7 +409,7 @@ function renderProperty(l){
 }
 function renderNotFound(){
   document.getElementById("propertyDetail").innerHTML = "";
-  const p = el("p", "", "This home is not available."); document.getElementById("propertyDetail").appendChild(p);
+  const p = el("p", "", "This property is not available."); document.getElementById("propertyDetail").appendChild(p);
   showView("property");
 }
 async function openProperty(id){
