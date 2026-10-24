@@ -39,8 +39,11 @@
   .bar{height:10px;background:#eef2f2;border-radius:999px;overflow:hidden;margin:6px 0 14px}
   .bar i{display:block;height:100%;background:var(--brand);border-radius:999px}
   .hidden{display:none!important} label{font-weight:600;font-size:14px}
+  .mapbox{height:320px;border:1px solid var(--line);border-radius:14px;overflow:hidden;z-index:0}
+  .mapbox.detail-map{height:300px;margin:16px 0}
   footer{padding:28px;text-align:center;color:var(--muted);font-size:14px}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 <header>
@@ -119,7 +122,7 @@
           <label>Price (USD) <input id="fPrice" type="number" required min="0"></label>
           <label>Status <select id="fStatus"><option>Draft</option><option>For sale</option><option>Pending</option><option>Sold</option></select></label>
         </div>
-        <label>Street address <input id="fAddress" required></label>
+        <label>Street address <input id="fAddress" placeholder="Leave blank for land with no street address, if you pin it on the map below"></label>
         <div class="row">
           <label>City <input id="fCity" required></label>
           <label>State <input id="fState" required maxlength="2" placeholder="TX"></label>
@@ -127,6 +130,16 @@
         <div class="row">
           <label>ZIP <input id="fZip" required></label>
           <label>Property type <select id="fType"><option>House</option><option>Apartment</option><option>Condo</option><option>Townhome</option><option>Land</option><option>Multi-family</option></select></label>
+        </div>
+        <div>
+          <label>Pin the location on the map</label>
+          <p class="meta" style="margin:0 0 8px">Click the map to drop a pin — especially useful for land with no street address. Or enter the address above and click "Find address on map".</p>
+          <div id="pickMap" class="mapbox"></div>
+          <div class="row" style="margin-top:10px">
+            <label>Latitude <input id="fLat" type="number" step="any" readonly></label>
+            <label>Longitude <input id="fLng" type="number" step="any" readonly></label>
+          </div>
+          <button type="button" class="secondary" data-action="find-address">Find address on map</button>
         </div>
         <div id="residentialFields">
           <div class="row">
@@ -159,7 +172,7 @@
           <label>Number of units <input id="fUnits" type="number" min="0"></label>
         </div>
         <label>Description <textarea id="fDesc" rows="4" required></textarea></label>
-        <label>Photo — upload from your device (max 5 MB, no SVG) <input id="fPhotoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+        <label>Photo — upload from your device (compressed automatically before upload, max 5 MB after compression, no SVG) <input id="fPhotoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
         <label>Or paste a photo URL (https only) <input id="fPhotoUrl" type="url" placeholder="https://…"></label>
         <label>Your name <input id="fAgent" required></label>
         <div class="row">
@@ -254,7 +267,7 @@ function el(tag, cls, text){
 function showView(name){
   for(const v of ["browse","property","auth","dashboard"]) document.getElementById("view-"+v).classList.toggle("hidden", v!==name);
   if(name==="browse") renderBrowse();
-  if(name==="dashboard") renderDashboard();
+  if(name==="dashboard"){ renderDashboard(); initPickMap(); }
   window.scrollTo({top:0, behavior:"smooth"});
 }
 function renderAuthArea(){
@@ -350,6 +363,8 @@ function renderProperty(l){
     }
     left.appendChild(det);
   }
+  const mapBox = renderDetailMap(l);
+  if(mapBox) left.appendChild(mapBox);
   const pub = publicListings();
   const avg = (arr) => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
   const avgPrice = avg(pub.map(x=>x.price)); const avgPpsf = avg(pub.filter(x=>x.sqft).map(x=>x.price/x.sqft)); const avgSqft = avg(pub.filter(x=>x.sqft).map(x=>x.sqft));
@@ -470,7 +485,9 @@ function editProperty(id){
   for(const [k, id2] of [["title","fTitle"],["price","fPrice"],["status","fStatus"],["address","fAddress"],["city","fCity"],["state","fState"],["zip","fZip"],["type","fType"],["beds","fBeds"],["baths","fBaths"],["sqft","fSqft"],["description","fDesc"],["photo","fPhotoUrl"],["agent","fAgent"],["phone","fPhone"],["agentEmail","fAgentEmail"]]) document.getElementById(id2).value = l[k] ?? "";
   updateTypeFields();
   const d = l.details || {};
-  for(const [k, id2] of [["yearBuilt","fYear"],["parking","fParking"],["lotAcres","fLotAcres"],["zoning","fZoning"],["utilities","fUtilities"],["roadAccess","fRoad"],["floor","fFloor"],["totalFloors","fTotalFloors"],["units","fUnits"]]) document.getElementById(id2).value = d[k] ?? "";
+  for(const [k, id2] of [["yearBuilt","fYear"],["parking","fParking"],["lotAcres","fLotAcres"],["zoning","fZoning"],["utilities","fUtilities"],["roadAccess","fRoad"],["floor","fFloor"],["totalFloors","fTotalFloors"],["units","fUnits"],["lat","fLat"],["lng","fLng"]]) document.getElementById(id2).value = d[k] ?? "";
+  if(pickMap && d.lat && d.lng) setPickPin(d.lat, d.lng);
+  else if(pickMarker){ pickMap.removeLayer(pickMarker); pickMarker = null; }
   document.getElementById("editId").value = id; window.scrollTo({top:document.getElementById("propertyForm").offsetTop-20, behavior:"smooth"});
 }
 async function deleteProperty(id){
@@ -485,10 +502,93 @@ async function deleteProperty(id){
   try{ if(!supabaseClient) saveLocal("rh_listings", listings); }catch{}
   renderDashboard(); renderBrowse();
 }
+async function compressImage(file){
+  if(file.type === "image/gif") return file;
+  const MAX_EDGE = 1920;
+  let bitmap = null;
+  try{
+    bitmap = await createImageBitmap(file, {imageOrientation: "from-image"});
+  }catch{
+    bitmap = await new Promise((res, rej) => {
+      const img = new Image(); const url = URL.createObjectURL(file);
+      img.onload = () => { URL.revokeObjectURL(url); res(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("decode")); };
+      img.src = url;
+    });
+  }
+  const w = bitmap.width, h = bitmap.height;
+  if(!w || !h) return file;
+  const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+  const tw = Math.round(w * scale), th = Math.round(h * scale);
+  const canvas = document.createElement("canvas"); canvas.width = tw; canvas.height = th;
+  const ctx = canvas.getContext("2d"); ctx.drawImage(bitmap, 0, 0, tw, th);
+  if(bitmap.close) bitmap.close();
+  const outType = file.type === "image/png" ? "image/png" : (file.type === "image/webp" ? "image/webp" : "image/jpeg");
+  const blob = await new Promise(res => canvas.toBlob(res, outType, 0.82));
+  if(!blob) return file;
+  if(blob.size >= file.size) return file;
+  const base = file.name.replace(/\.[^.]+$/, "");
+  const ext = outType === "image/png" ? "png" : (outType === "image/webp" ? "webp" : "jpg");
+  return new File([blob], base + "." + ext, {type: outType});
+}
+let pickMap = null, pickMarker = null;
+async function loadLeaflet(){
+  if(window.L) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.onload = resolve; s.onerror = () => reject(new Error("map load"));
+    document.head.appendChild(s);
+  });
+}
+function setPickPin(lat, lng){
+  document.getElementById("fLat").value = Number(lat).toFixed(6);
+  document.getElementById("fLng").value = Number(lng).toFixed(6);
+  if(!pickMap) return;
+  if(pickMarker) pickMarker.setLatLng([lat, lng]);
+  else pickMarker = L.marker([lat, lng]).addTo(pickMap);
+  pickMap.setView([lat, lng], Math.max(pickMap.getZoom(), 13));
+}
+async function initPickMap(){
+  if(pickMap){ setTimeout(() => pickMap.invalidateSize(), 50); return; }
+  try{ await loadLeaflet(); }catch{ return; }
+  pickMap = L.map("pickMap").setView([32.95, -96.82], 10);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: "© OpenStreetMap contributors"}).addTo(pickMap);
+  pickMap.on("click", (e) => setPickPin(e.latlng.lat, e.latlng.lng));
+  const lat = Number(document.getElementById("fLat").value), lng = Number(document.getElementById("fLng").value);
+  if(lat && lng) setPickPin(lat, lng);
+  setTimeout(() => pickMap.invalidateSize(), 50);
+}
+async function findAddressOnMap(){
+  const q = [document.getElementById("fAddress").value, document.getElementById("fCity").value, document.getElementById("fState").value, document.getElementById("fZip").value].map(s => s.trim()).filter(Boolean).join(", ");
+  if(!q){ alert("Enter an address, city, or ZIP first, or click the map to drop a pin."); return; }
+  try{
+    await initPickMap();
+    const res = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(q));
+    const data = await res.json();
+    if(!data.length){ alert("That address was not found on the map. Click the map to drop a pin instead."); return; }
+    setPickPin(Number(data[0].lat), Number(data[0].lon));
+  }catch{ alert("Could not look up that address. Click the map to drop a pin instead."); }
+}
+function renderDetailMap(l){
+  const d = l.details || {};
+  if(!d.lat || !d.lng) return null;
+  const box = el("div"); box.appendChild(el("h3", "", "Location"));
+  const mapDiv = document.createElement("div"); mapDiv.className = "mapbox detail-map"; box.appendChild(mapDiv);
+  const link = document.createElement("a"); link.href = "https://www.google.com/maps?q=" + encodeURIComponent(d.lat + "," + d.lng); link.target = "_blank"; link.rel = "noopener"; link.textContent = "Open in Google Maps"; box.appendChild(link);
+  loadLeaflet().then(() => {
+    const m = L.map(mapDiv).setView([d.lat, d.lng], 14);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom: 19, attribution: "© OpenStreetMap contributors"}).addTo(m);
+    const popup = document.createElement("div"); popup.textContent = l.title;
+    L.marker([d.lat, d.lng]).addTo(m).bindPopup(popup).openPopup();
+    setTimeout(() => m.invalidateSize(), 50);
+  }).catch(() => {});
+  return box;
+}
 async function saveProperty(e){
   e.preventDefault();
   if(!user){ showView("auth"); return; }
-  const file = document.getElementById("fPhotoFile").files[0];
+  let file = document.getElementById("fPhotoFile").files[0];
   let photo = document.getElementById("fPhotoUrl").value.trim();
   if(photo && !(photo.startsWith("https://") || (photo.startsWith("data:image/") && !photo.startsWith("data:image/svg")))){
     alert("Photo URL must start with https:// (SVG photos are not allowed)."); return;
@@ -496,7 +596,9 @@ async function saveProperty(e){
   if(file){
     if(file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg")){ alert("SVG photos are not allowed."); return; }
     if(!file.type.startsWith("image/")){ alert("Please upload an image file."); return; }
-    if(file.size > 5 * 1024 * 1024){ alert("Photo is too large. Please use a photo under 5 MB."); return; }
+    if(file.size > 20 * 1024 * 1024){ alert("Photo is too large. Please use a photo under 20 MB."); return; }
+    try{ file = await compressImage(file); }catch{ /* fall back to the original file */ }
+    if(file.size > 5 * 1024 * 1024){ alert("Photo is still over 5 MB after compression. Please use a smaller photo."); return; }
   }
   if(file){
     if(supabaseClient){
@@ -510,6 +612,9 @@ async function saveProperty(e){
       try{ photo = await new Promise((res, rej) => { const r = new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(new Error("read")); r.readAsDataURL(file); }); }
       catch{ alert("Could not read that photo."); return; }
     }
+  }
+  if(!document.getElementById("fAddress").value.trim() && !(document.getElementById("fLat").value && document.getElementById("fLng").value)){
+    alert("Enter a street address, or drop a pin on the map — land with no street address needs a pin."); return;
   }
   const pType = document.getElementById("fType").value;
   const details = {};
@@ -531,6 +636,8 @@ async function saveProperty(e){
   if(pType === "Multi-family"){
     const uv = document.getElementById("fUnits").value; if(uv !== "") setDetail("units", Number(uv));
   }
+  const latv = document.getElementById("fLat").value, lngv = document.getElementById("fLng").value;
+  if(latv !== "" && lngv !== ""){ setDetail("lat", Number(latv)); setDetail("lng", Number(lngv)); }
   const data = {title:document.getElementById("fTitle").value.trim(),price:Number(document.getElementById("fPrice").value),status:document.getElementById("fStatus").value,address:document.getElementById("fAddress").value.trim(),city:document.getElementById("fCity").value.trim(),state:document.getElementById("fState").value.trim().toUpperCase(),zip:document.getElementById("fZip").value.trim(),type:pType,beds:pType === "Land" ? 0 : Number(document.getElementById("fBeds").value),baths:pType === "Land" ? 0 : Number(document.getElementById("fBaths").value),sqft:pType === "Land" ? null : (Number(document.getElementById("fSqft").value)||null),description:document.getElementById("fDesc").value.trim(),photo:safePhotoUrl(photo),agent:document.getElementById("fAgent").value.trim(),phone:document.getElementById("fPhone").value.trim(),agentEmail:user.email,details};
   const editId = document.getElementById("editId").value;
   if(editId){
@@ -553,6 +660,7 @@ async function saveProperty(e){
     try{ saveLocal("rh_listings", listings); }catch{ alert("Could not save — the photo may be too large for this browser. Try a smaller photo or a photo URL."); return; }
   }
   document.getElementById("propertyForm").reset(); document.getElementById("editId").value=""; document.getElementById("formTitle").textContent="Add a property"; updateTypeFields();
+  if(pickMarker && pickMap){ pickMap.removeLayer(pickMarker); pickMarker = null; }
   renderDashboard(); renderBrowse(); alert(editId ? "Listing updated." : "Listing saved.");
 }
 document.addEventListener("click", (e) => {
@@ -567,6 +675,7 @@ document.addEventListener("click", (e) => {
   else if(action === "delete") deleteProperty(btn.dataset.id);
   else if(action === "publish") setStatus(btn.dataset.id, "For sale");
   else if(action === "unpublish") setStatus(btn.dataset.id, "Draft");
+  else if(action === "find-address") findAddressOnMap();
   else if(action === "copy-link"){
     const input = document.getElementById("shareLink");
     if(input) navigator.clipboard.writeText(input.value).then(()=>alert("Link copied!")).catch(()=>alert("Copy this link: " + input.value));
