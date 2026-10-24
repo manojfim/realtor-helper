@@ -98,7 +98,6 @@
       <h2 id="authTitle">Realtor sign in</h2>
       <p id="demoWarning" class="hidden" style="background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:12px">Demo only — no password is checked or stored here. Do not use a real password.</p>
       <form id="authForm">
-        <label>Name <input id="authName" autocomplete="name"></label>
         <label>Email <input id="authEmail" type="email" required autocomplete="email"></label>
         <label>Password <input id="authPass" type="password" minlength="6" autocomplete="current-password"></label>
         <button type="submit" id="authSubmit">Sign in</button>
@@ -276,7 +275,8 @@ function renderAuthArea(){
     const span = el("span"); span.style.alignSelf = "center"; span.textContent = user.name || user.email; area.appendChild(span);
     const btn = el("button", "secondary"); btn.dataset.action = "logout"; btn.textContent = "Sign out"; area.appendChild(btn);
   } else {
-    const btn = el("button"); btn.dataset.action = "view"; btn.dataset.view = "auth"; btn.textContent = "Sign in"; area.appendChild(btn);
+    // No separate header "Sign in" button: "For realtors" is the single
+    // sign-in entry point, and it opens this same form when signed out.
   }
   document.getElementById("demoWarning").classList.toggle("hidden", MODE !== "demo");
   document.getElementById("authTitle").textContent = authMode === "signin" ? "Realtor sign in" : "Create a realtor account";
@@ -458,7 +458,7 @@ async function setStatus(id, status){
 async function handleAuth(e){
   e.preventDefault();
   const email = document.getElementById("authEmail").value.trim();
-  const name = document.getElementById("authName").value.trim() || email.split("@")[0];
+  const name = email.split("@")[0];
   const password = document.getElementById("authPass").value;
   if(supabaseClient){
     const result = authMode === "signin"
@@ -698,9 +698,9 @@ async function loadSupabase(){
   supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   MODE = "live";
   const {data} = await supabaseClient.auth.getSession();
-  if(data.session) user = {email: data.session.user.email, name: data.session.user.user_metadata?.name || data.session.user.email};
+  if(data.session) user = {email: data.session.user.email, name: data.session.user.user_metadata?.name || data.session.user.email.split("@")[0]};
   supabaseClient.auth.onAuthStateChange((_event, session) => {
-    user = session ? {email: session.user.email, name: session.user.user_metadata?.name || session.user.email} : null;
+    user = session ? {email: session.user.email, name: session.user.user_metadata?.name || session.user.email.split("@")[0]} : null;
     renderAuthArea();
   });
 }
