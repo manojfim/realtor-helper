@@ -183,7 +183,10 @@ const PLACEHOLDER_PHOTO = "https://images.unsplash.com/photo-1568605114967-8130f
 const SAMPLES = [
   {id:"sample-1",title:"Bright 4-bed home near the park",price:485000,address:"123 Maple Grove Drive",city:"Sampletown",state:"TX",zip:"75000",beds:4,baths:3,sqft:2380,type:"House",status:"For sale",description:"Open living area, large backyard, and a quiet street — great for families. Walk to the neighborhood park.",photo:"https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2018,parking:2}},
   {id:"sample-2",title:"Modern 3-bed townhome, low maintenance",price:329000,address:"456 Oak Hollow Court",city:"Sampletown",state:"TX",zip:"75000",beds:3,baths:2.5,sqft:1680,type:"Townhome",status:"For sale",description:"Updated kitchen, private patio, and a two-car garage. Ideal first home or low-maintenance move.",photo:"https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2021,parking:2}},
-  {id:"sample-3",title:"Buildable land on a quiet road",price:95000,address:"789 Country Road",city:"Sampletown",state:"TX",zip:"75000",beds:0,baths:0,sqft:null,type:"Land",status:"For sale",description:"Flat, cleared lot ready to build on, with road frontage.",photo:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{lotAcres:2.5,zoning:"Residential",utilities:"Water, electric",roadAccess:"Paved"}}
+  {id:"sample-3",title:"Buildable land on a quiet road",price:95000,address:"789 Country Road",city:"Sampletown",state:"TX",zip:"75000",beds:0,baths:0,sqft:null,type:"Land",status:"For sale",description:"Flat, cleared lot ready to build on, with road frontage.",photo:"https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{lotAcres:2.5,zoning:"Residential",utilities:"Water, electric",roadAccess:"Paved"}},
+  {id:"sample-4",title:"Sunny 2-bed apartment in the city",price:249000,address:"101 Downtown Lane, Apt 12",city:"Sampletown",state:"TX",zip:"75000",beds:2,baths:1.5,sqft:1050,type:"Apartment",status:"For sale",description:"Bright apartment with a balcony, in-building laundry, and covered parking.",photo:"https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2015,parking:1,floor:3,totalFloors:8}},
+  {id:"sample-5",title:"Stylish 1-bed condo near shops",price:189000,address:"202 Market Street, Unit 5",city:"Sampletown",state:"TX",zip:"75000",beds:1,baths:1,sqft:820,type:"Condo",status:"For sale",description:"Updated condo with a modern kitchen, steps from shops and cafes.",photo:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2019,parking:1}},
+  {id:"sample-6",title:"Four-unit building, great for investors",price:620000,address:"303 Investor Avenue",city:"Sampletown",state:"TX",zip:"75000",beds:8,baths:4,sqft:4200,type:"Multi-family",status:"For sale",description:"Four rented units in one building, with separate meters and a shared lot.",photo:"https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com",details:{yearBuilt:2008,parking:4,units:4}}
 ];
 function loadLocal(k, fallback){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? fallback; }catch{ return fallback; } }
 function saveLocal(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
@@ -300,7 +303,7 @@ function renderBrowse(){
   for(const l of shown){
     const card = el("article", "card listing");
     const img = document.createElement("img"); img.src = safePhotoUrl(l.photo); img.alt = l.title; img.loading = "lazy"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img);
-    const badge = el("div"); const b = el("span", "badge"); b.textContent = l.status; badge.appendChild(b); card.appendChild(badge);
+    const badge = el("div"); const b = el("span", "badge"); b.textContent = String(l.id).startsWith("sample-") ? "Sample · " + l.status : l.status; badge.appendChild(b); card.appendChild(badge);
     card.appendChild(el("div", "price", money(l.price)));
     const est = el("div", "meta", "Est. " + money(Math.round(monthlyEstimate(l.price, 20, 6.5, 30))) + " / mo");
     card.appendChild(est);
@@ -325,6 +328,7 @@ function renderProperty(l){
   const left = el("div");
   const img = document.createElement("img"); img.className = "thumb"; img.src = safePhotoUrl(l.photo); img.alt = l.title; left.appendChild(img);
   const h2 = el("h2"); h2.style.margin = "16px 0 4px"; h2.textContent = l.title; left.appendChild(h2);
+  if(String(l.id).startsWith("sample-")){ const sb = el("div"); const sbb = el("span", "badge"); sbb.textContent = "Sample listing — not a real home for sale"; sb.appendChild(sbb); left.appendChild(sb); }
   left.appendChild(el("div", "price", money(l.price)));
   left.appendChild(el("p", "meta", `${l.address}, ${l.city}, ${l.state} ${l.zip} · ${l.type}`));
   const tiles = el("div", "tiles");
@@ -597,6 +601,7 @@ async function boot(){
   if(supabaseClient){
     const {data, error} = await supabaseClient.from("properties").select("*").order("created_at", {ascending:false});
     listings = error ? [] : data.map(mapRow);
+    if(!error && listings.length === 0){ listings = SAMPLES; }
     if(error) liveError = error.message;
   } else {
     listings = loadLocal("rh_listings", null);
