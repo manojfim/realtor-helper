@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Realtor Helper — Share a property with one link</title>
+<meta name="description" content="For small realtors: save a property once, share it with any customer by link, text or email.">
+<style>
+  :root{--bg:#f6f5f2;--card:#fff;--ink:#1c2430;--muted:#667085;--brand:#0f766e;--line:#e4e7ec;--warn:#fef3c7}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  a{color:var(--brand)} header{background:#0f2a2d;color:#fff;padding:14px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  header strong{font-size:20px} nav{display:flex;gap:8px;flex-wrap:wrap} button,.btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--brand);color:#fff;font-weight:600}
+  button.secondary,.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} button.danger{background:#b42318}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px} .hero{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+  .hero h1{margin:0 0 8px;font-size:32px;line-height:1.2} .hero p{color:var(--muted);margin:0 0 16px;max-width:680px}
+  .notice{background:var(--warn);border:1px solid #fde68a;border-radius:12px;padding:12px 14px;margin:16px 0}
+  .filters,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .filters{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0} .filters input,.filters select,form input,form select,form textarea{padding:10px;border:1px solid var(--line);border-radius:10px;width:100%;font:inherit}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:16px}
+  .listing img{width:100%;height:190px;object-fit:cover;border-radius:12px;background:#eef2f2}
+  .price{font-size:22px;font-weight:800;margin:10px 0 2px} .meta{color:var(--muted);font-size:14px}
+  .badge{display:inline-block;background:#ecfdf5;color:#065f46;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
+  form{display:grid;gap:12px} form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px} @media(max-width:640px){form .row{grid-template-columns:1fr}}
+  .thumb{width:100%;height:220px;object-fit:cover;border-radius:14px;background:#eef2f2}
+  .detail{display:grid;grid-template-columns:1.2fr .8fr;gap:20px} @media(max-width:760px){.detail{grid-template-columns:1fr}}
+  .sharebox{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:14px;padding:16px}
+  .hidden{display:none!important} label{font-weight:600;font-size:14px} small{color:var(--muted)}
+  footer{padding:24px;text-align:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <strong>🏡 Realtor Helper</strong>
+  <nav>
+    <button class="secondary" data-action="view" data-view="browse">Browse homes</button>
+    <button class="secondary" data-action="view" data-view="dashboard">My listings</button>
+    <span id="authArea"></span>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div id="modeNotice" class="notice" role="status"></div>
+
+  <section id="view-browse">
+    <div class="hero">
+      <h1>Save a property once. Share it with one link.</h1>
+      <p>Built for small realtors: add photos, address, price and details, then send the property link to any customer by text or email — no more sending a pile of photos one by one.</p>
+      <button data-action="view" data-view="dashboard">Add a property</button>
+      <button class="secondary" data-action="focus-search">Search listings</button>
+    </div>
+    <div class="filters" aria-label="Search listings">
+      <input id="search" aria-label="Search city, address, or ZIP" placeholder="Search city, address, or ZIP…" style="flex:2;min-width:220px">
+      <input id="maxPrice" type="number" aria-label="Maximum price" placeholder="Max price" style="flex:1;min-width:140px">
+      <select id="minBeds" aria-label="Minimum bedrooms" style="flex:1;min-width:140px">
+        <option value="">Any beds</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+      </select>
+    </div>
+    <div id="browseGrid" class="grid"></div>
+    <p id="browseEmpty" class="hidden">No listings match yet. Try clearing the search, or add the first one.</p>
+  </section>
+
+  <section id="view-property" class="hidden">
+    <button class="secondary" data-action="view" data-view="browse">← Back to homes</button>
+    <div id="propertyDetail" style="margin-top:16px"></div>
+  </section>
+
+  <section id="view-auth" class="hidden">
+    <div class="card" style="max-width:520px;margin:0 auto">
+      <h2 id="authTitle">Realtor sign in</h2>
+      <p class="meta">Create an account to save your own listings. Customers never need an account to open a shared property link.</p>
+      <p id="demoAuthWarning" class="notice hidden"><strong>Demo mode:</strong> this sign-in is only for testing in this browser. No password is checked or stored — do not use a real password here.</p>
+      <form id="authForm">
+        <label>Name <input id="authName" autocomplete="name"></label>
+        <label>Email <input id="authEmail" type="email" required autocomplete="email"></label>
+        <label>Password <input id="authPass" type="password" minlength="6" autocomplete="current-password"></label>
+        <button type="submit" id="authSubmit">Sign in</button>
+        <button type="button" class="secondary" data-action="toggle-auth" id="authToggle">I need to create an account instead</button>
+        <small id="authHint"></small>
+      </form>
+    </div>
+  </section>
+
+  <section id="view-dashboard" class="hidden">
+    <div class="card">
+      <h2>My listings</h2>
+      <p class="meta">Only listings you created appear here. Each one gets its own shareable page.</p>
+      <div id="myListings"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h2 id="formTitle">Add a property</h2>
+      <form id="propertyForm">
+        <input type="hidden" id="editId">
+        <label>Listing title <input id="fTitle" required placeholder="e.g. Bright 4-bed home near the park"></label>
+        <div class="row">
+          <label>Price (USD) <input id="fPrice" type="number" required min="0"></label>
+          <label>Status <select id="fStatus"><option>For sale</option><option>Pending</option><option>Sold</option></select></label>
+        </div>
+        <label>Street address <input id="fAddress" required></label>
+        <div class="row">
+          <label>City <input id="fCity" required></label>
+          <label>State <input id="fState" required maxlength="2" placeholder="TX"></label>
+        </div>
+        <div class="row">
+          <label>ZIP <input id="fZip" required></label>
+          <label>Property type <select id="fType"><option>Single family</option><option>Townhome</option><option>Condo</option><option>Land</option><option>Multi-family</option></select></label>
+        </div>
+        <div class="row">
+          <label>Bedrooms <input id="fBeds" type="number" min="0" value="3"></label>
+          <label>Bathrooms <input id="fBaths" type="number" step="0.5" min="0" value="2"></label>
+        </div>
+        <label>Living area (sq ft) <input id="fSqft" type="number" min="0"></label>
+        <label>Description <textarea id="fDesc" rows="4" required></textarea></label>
+        <label>Photo — upload from your device (max 5 MB, no SVG) <input id="fPhotoFile" type="file" accept="image/png,image/jpeg,image/webp"></label>
+        <label>Or paste a photo URL (https only) <input id="fPhotoUrl" type="url" placeholder="https://…"></label>
+        <label>Your name (shown to buyers) <input id="fAgent" required></label>
+        <div class="row">
+          <label>Your phone <input id="fPhone" type="tel"></label>
+          <label>Your email <input id="fAgentEmail" type="email" readonly></label>
+        </div>
+        <button type="submit">Save property</button>
+        <small>Listings are owned by your sign-in email. In demo mode, photos you upload stay in this browser only. With the real backend connected, they upload to secure storage and appear on the shared link for any customer.</small>
+      </form>
+    </div>
+  </section>
+</main>
+<footer>Realtor Helper · Share link, photos, address and details in one place.</footer>
+
+<script>
+/* ===== Backend config — fill these in when the Supabase project is ready ===== */
+const SUPABASE_URL = "https://hldupdnyighbqiczannf.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsZHVwZG55aWdoYnFpY3phbm5mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDQzNDcsImV4cCI6MjEwODM4MDM0N30.Lk-OR-bbY-9qpP-pr2LuuoO9Aw3iUFc4l_Tug09oZd0"; // public anon key only — never a service-role key
+let supabaseClient = null;
+let MODE = "demo";
+let authMode = "signin";
+
+/* Fictional sample listings only — never use a real person's address here. */
+const PLACEHOLDER_PHOTO = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80";
+const SAMPLES = [
+  {id:"sample-1",title:"Bright 4-bed home near the park",price:485000,address:"123 Maple Grove Drive",city:"Sampletown",state:"TX",zip:"75000",beds:4,baths:3,sqft:2380,type:"Single family",status:"For sale",description:"Open living area, large backyard, and a quiet street — great for families. Walk to the neighborhood park.",photo:"https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com"},
+  {id:"sample-2",title:"Modern 3-bed townhome, low maintenance",price:329000,address:"456 Oak Hollow Court",city:"Sampletown",state:"TX",zip:"75000",beds:3,baths:2.5,sqft:1680,type:"Townhome",status:"For sale",description:"Updated kitchen, private patio, and a two-car garage. Ideal first home or low-maintenance move.",photo:"https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200&q=80",agent:"Sample Realtor",phone:"(555) 010-1234",agentEmail:"sample@example.com"}
+];
+function loadLocal(k, fallback){ try{ const v = JSON.parse(localStorage.getItem(k)); return v ?? fallback; }catch{ return fallback; } }
+function saveLocal(k, v){ localStorage.setItem(k, JSON.stringify(v)); }
+let listings = [];
+let user = loadLocal("rh_user", null);
+
+function money(n){ return "$" + Number(n||0).toLocaleString(); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function safePhotoUrl(url){
+  if(!url) return PLACEHOLDER_PHOTO;
+  if(typeof url !== "string") return PLACEHOLDER_PHOTO;
+  if(url.startsWith("data:image/") && !url.startsWith("data:image/svg")) return url;
+  try{ const u = new URL(url); if(u.protocol === "https:" && !u.pathname.toLowerCase().endsWith(".svg")) return url; }catch{}
+  return PLACEHOLDER_PHOTO;
+}
+function canManage(l){ return !!(user && l && l.agentEmail === user.email); }
+function mapRow(r){
+  return {id:String(r.id),title:r.title,price:Number(r.price),status:r.status,address:r.address,city:r.city,state:r.state,zip:r.zip,type:r.type,beds:Number(r.beds),baths:Number(r.baths),sqft:r.sqft,description:r.description,photo:safePhotoUrl(r.photo),agent:r.agent,phone:r.phone||"",agentEmail:r.agent_email||""};
+}
+function toRow(d){
+  return {title:d.title,price:d.price,status:d.status,address:d.address,city:d.city,state:d.state,zip:d.zip,type:d.type,beds:d.beds,baths:d.baths,sqft:d.sqft,description:d.description,photo:d.photo,agent:d.agent,phone:d.phone,agent_email:d.agentEmail};
+}
+function shareUrl(l){
+  const u = new URL(location.href);
+  if(MODE === "live"){ u.searchParams.set("property", l.id); u.searchParams.delete("d"); return u.toString(); }
+  /* Demo mode: the listing travels inside the link itself, so a customer on
+     another device can open it even though there is no backend yet. Photos
+     that are local data URLs are replaced with the placeholder to keep the
+     link short; editing later does not update a link already sent. */
+  const copy = {...l, photo: (typeof l.photo === "string" && l.photo.startsWith("https://")) ? l.photo : PLACEHOLDER_PHOTO};
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(copy)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+  u.searchParams.delete("property"); u.searchParams.set("d", encoded); return u.toString();
+}
+function decodeShared(){
+  try{
+    const raw = new URLSearchParams(location.search).get("d"); if(!raw) return null;
+    const json = decodeURIComponent(escape(atob(raw.replace(/-/g,"+").replace(/_/g,"/"))));
+    const d = JSON.parse(json);
+    if(!d || typeof d.title !== "string" || typeof d.address !== "string") return null;
+    return {...d, photo: safePhotoUrl(d.photo)};
+  }catch{ return null; }
+}
+
+function showView(name){
+  for(const v of ["browse","property","auth","dashboard"]) document.getElementById("view-"+v).classList.toggle("hidden", v!==name);
+  if(name==="browse") renderBrowse();
+  if(name==="dashboard") renderDashboard();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function renderAuthArea(){
+  const area = document.getElementById("authArea");
+  if(user){
+    area.innerHTML = "";
+    const span = document.createElement("span"); span.style.alignSelf = "center"; span.textContent = user.name || user.email; area.appendChild(span);
+    const btn = document.createElement("button"); btn.className = "secondary"; btn.dataset.action = "logout"; btn.textContent = "Sign out"; area.appendChild(btn);
+  } else {
+    area.innerHTML = "";
+    const btn = document.createElement("button"); btn.dataset.action = "view"; btn.dataset.view = "auth"; btn.textContent = "Sign in / Sign up"; area.appendChild(btn);
+  }
+  document.getElementById("demoAuthWarning").classList.toggle("hidden", MODE !== "demo");
+  document.getElementById("authHint").textContent = MODE==="live"
+    ? "Signed in with the real backend. Your listings are saved centrally, and only you can edit or delete your own."
+    : "Demo mode: this account lives only in this browser. Connect Supabase (see README) for real multi-realtor accounts.";
+  document.getElementById("authTitle").textContent = authMode === "signin" ? "Realtor sign in" : "Create a realtor account";
+  document.getElementById("authSubmit").textContent = authMode === "signin" ? "Sign in" : "Create account";
+  document.getElementById("authToggle").textContent = authMode === "signin" ? "I need to create an account instead" : "I already have an account";
+  document.getElementById("authPass").required = MODE === "live";
+}
+function renderBrowse(){
+  const q = (document.getElementById("search").value||"").toLowerCase();
+  const max = Number(document.getElementById("maxPrice").value||0);
+  const beds = Number(document.getElementById("minBeds").value||0);
+  /* Sold listings are hidden from Browse; they remain visible in My listings. */
+  const shown = listings.filter(l => l.status !== "Sold").filter(l =>
+    (!q || [l.title,l.address,l.city,l.zip].join(" ").toLowerCase().includes(q)) &&
+    (!max || l.price<=max) && (!beds || l.beds>=beds));
+  document.getElementById("browseEmpty").classList.toggle("hidden", shown.length>0);
+  const grid = document.getElementById("browseGrid"); grid.innerHTML = "";
+  for(const l of shown){
+    const card = document.createElement("article"); card.className = "card listing";
+    const img = document.createElement("img"); img.src = safePhotoUrl(l.photo); img.alt = l.title; img.loading = "lazy"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img);
+    const badge = document.createElement("div"); const b = document.createElement("span"); b.className = "badge"; b.textContent = l.status; badge.appendChild(b); card.appendChild(badge);
+    const price = document.createElement("div"); price.className = "price"; price.textContent = money(l.price); card.appendChild(price);
+    const title = document.createElement("div"); const st = document.createElement("strong"); st.textContent = l.title; title.appendChild(st); card.appendChild(title);
+    const meta = document.createElement("div"); meta.className = "meta"; meta.textContent = `${l.address}, ${l.city}, ${l.state} ${l.zip} · ${l.beds} bd · ${l.baths} ba${l.sqft ? " · " + l.sqft.toLocaleString() + " sq ft" : ""}`; card.appendChild(meta);
+    const desc = document.createElement("p"); desc.textContent = String(l.description).slice(0,120) + "…"; card.appendChild(desc);
+    const btn = document.createElement("button"); btn.dataset.action = "open"; btn.dataset.id = l.id; btn.textContent = "View & share"; card.appendChild(btn);
+    grid.appendChild(card);
+  }
+}
+function renderProperty(l, note){
+  const url = shareUrl(l);
+  const detail = document.getElementById("propertyDetail"); detail.innerHTML = "";
+  const wrap = document.createElement("div"); wrap.className = "detail";
+  const left = document.createElement("div");
+  const img = document.createElement("img"); img.className = "thumb"; img.src = safePhotoUrl(l.photo); img.alt = l.title; left.appendChild(img);
+  const h2 = document.createElement("h2"); h2.style.margin = "16px 0 4px"; h2.textContent = l.title; left.appendChild(h2);
+  const price = document.createElement("div"); price.className = "price"; price.textContent = money(l.price); left.appendChild(price);
+  const meta = document.createElement("p"); meta.className = "meta"; meta.textContent = `${l.address}, ${l.city}, ${l.state} ${l.zip} · ${l.type} · ${l.beds} bd · ${l.baths} ba${l.sqft ? " · " + l.sqft.toLocaleString() + " sq ft" : ""}`; left.appendChild(meta);
+  const desc = document.createElement("p"); desc.textContent = l.description; left.appendChild(desc);
+  wrap.appendChild(left);
+  const aside = document.createElement("aside");
+  const share = document.createElement("div"); share.className = "sharebox";
+  const sh = document.createElement("h3"); sh.style.marginTop = "0"; sh.textContent = "Share this property"; share.appendChild(sh);
+  const sm = document.createElement("p"); sm.className = "meta"; sm.textContent = note || "Send this link — the buyer needs no account."; share.appendChild(sm);
+  const input = document.createElement("input"); input.id = "shareLink"; input.value = url; input.readOnly = true; input.style.marginBottom = "10px"; share.appendChild(input);
+  const copy = document.createElement("button"); copy.dataset.action = "copy-link"; copy.textContent = "Copy link"; share.appendChild(copy);
+  const email = document.createElement("a"); email.className = "btn secondary"; email.style.cssText = "display:inline-block;margin-top:8px;text-decoration:none"; email.href = "mailto:?subject=" + encodeURIComponent(l.title) + "&body=" + encodeURIComponent(url); email.textContent = "Share by email"; share.appendChild(email);
+  const sms = document.createElement("a"); sms.className = "btn secondary"; sms.style.cssText = "display:inline-block;margin-top:8px;text-decoration:none"; sms.href = "sms:?body=" + encodeURIComponent(l.title + " " + url); sms.textContent = "Share by text"; share.appendChild(sms);
+  aside.appendChild(share);
+  const contact = document.createElement("div"); contact.className = "card"; contact.style.marginTop = "16px";
+  const ch = document.createElement("h3"); ch.style.marginTop = "0"; ch.textContent = "Contact the realtor"; contact.appendChild(ch);
+  const cp = document.createElement("p"); const cs = document.createElement("strong"); cs.textContent = l.agent; cp.appendChild(cs); cp.appendChild(document.createElement("br")); cp.append(l.phone || ""); cp.appendChild(document.createElement("br")); cp.append(l.agentEmail || ""); contact.appendChild(cp);
+  const mail = document.createElement("a"); mail.className = "btn"; mail.style.textDecoration = "none"; mail.href = "mailto:" + encodeURIComponent(l.agentEmail || "") + "?subject=About " + encodeURIComponent(l.title); mail.textContent = "Email realtor"; contact.appendChild(mail);
+  aside.appendChild(contact); wrap.appendChild(aside); detail.appendChild(wrap);
+}
+function renderNotFound(){
+  document.getElementById("propertyDetail").innerHTML = "";
+  const p = document.createElement("p"); p.textContent = "Listing not found. It may have been removed, or the link may be incomplete."; document.getElementById("propertyDetail").appendChild(p);
+  showView("property");
+}
+async function openProperty(id){
+  let l = listings.find(x=>x.id===id);
+  if(!l && MODE === "live" && supabaseClient){
+    const {data, error} = await supabaseClient.from("properties").select("*").eq("id", id).single();
+    if(!error && data){ l = mapRow(data); listings.push(l); }
+  }
+  if(!l){ renderNotFound(); return; }
+  renderProperty(l, MODE === "demo" ? "Demo link: this listing travels inside the link itself, so it works on another device. Editing later will not update a link already sent." : undefined);
+  showView("property");
+}
+function renderDashboard(){
+  if(!user){ showView("auth"); return; }
+  const mine = listings.filter(l=>l.agentEmail===user.email);
+  const box = document.getElementById("myListings"); box.innerHTML = "";
+  if(!mine.length){ const p = document.createElement("p"); p.textContent = "You have no listings yet — add your first one below."; box.appendChild(p); }
+  for(const l of mine){
+    const row = document.createElement("div"); row.style.cssText = "display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);padding:12px 0";
+    const left = document.createElement("div"); const st = document.createElement("strong"); st.textContent = l.title; left.appendChild(st);
+    const meta = document.createElement("div"); meta.className = "meta"; meta.textContent = money(l.price) + " · " + l.status; left.appendChild(meta); row.appendChild(left);
+    const actions = document.createElement("div");
+    for(const [action, label, cls] of [["open","Share page","secondary"],["edit","Edit","secondary"],["delete","Delete","danger"]]){
+      const b = document.createElement("button"); b.dataset.action = action; b.dataset.id = l.id; if(cls) b.className = cls; b.textContent = label; actions.appendChild(b);
+    }
+    row.appendChild(actions); box.appendChild(row);
+  }
+  document.getElementById("fAgent").value = user.name || "";
+  document.getElementById("fAgentEmail").value = user.email || "";
+}
+async function handleAuth(e){
+  e.preventDefault();
+  const email = document.getElementById("authEmail").value.trim();
+  const name = document.getElementById("authName").value.trim() || email.split("@")[0];
+  const password = document.getElementById("authPass").value;
+  if(supabaseClient){
+    const result = authMode === "signin"
+      ? await supabaseClient.auth.signInWithPassword({email, password})
+      : await supabaseClient.auth.signUp({email, password, options:{data:{name}}});
+    if(result.error){ alert(result.error.message); return; }
+    if(!result.data.session){ alert("Check your email to confirm your account, then sign in."); authMode = "signin"; renderAuthArea(); return; }
+    user = {email: result.data.user.email, name: result.data.user.user_metadata?.name || name};
+  } else {
+    user = {email, name};
+    try{ saveLocal("rh_user", user); }catch{ alert("Could not save this demo account in this browser."); return; }
+  }
+  renderAuthArea(); showView("dashboard");
+}
+async function logout(){
+  if(supabaseClient) await supabaseClient.auth.signOut();
+  user = null; try{ localStorage.removeItem("rh_user"); }catch{}
+  renderAuthArea(); showView("browse");
+}
+function editProperty(id){
+  const l = listings.find(x=>x.id===id); if(!l) return;
+  if(!canManage(l)){ alert("You can only edit your own listings."); return; }
+  document.getElementById("formTitle").textContent = "Edit property";
+  for(const [k, id2] of [["title","fTitle"],["price","fPrice"],["status","fStatus"],["address","fAddress"],["city","fCity"],["state","fState"],["zip","fZip"],["type","fType"],["beds","fBeds"],["baths","fBaths"],["sqft","fSqft"],["description","fDesc"],["photo","fPhotoUrl"],["agent","fAgent"],["phone","fPhone"],["agentEmail","fAgentEmail"]]) document.getElementById(id2).value = l[k] ?? "";
+  document.getElementById("editId").value = id; window.scrollTo({top:document.getElementById("propertyForm").offsetTop-20, behavior:"smooth"});
+}
+async function deleteProperty(id){
+  const l = listings.find(x=>x.id===id); if(!l) return;
+  if(!canManage(l)){ alert("You can only delete your own listings."); return; }
+  if(!confirm("Delete this listing?")) return;
+  if(supabaseClient){
+    const {error} = await supabaseClient.from("properties").delete().eq("id", id);
+    if(error){ alert(error.message); return; }
+  }
+  listings = listings.filter(x=>x.id!==id);
+  try{ if(!supabaseClient) saveLocal("rh_listings", listings); }catch{ alert("Listing was deleted, but this browser could not save that change."); }
+  renderDashboard(); renderBrowse();
+}
+async function saveProperty(e){
+  e.preventDefault();
+  if(!user){ showView("auth"); return; }
+  const file = document.getElementById("fPhotoFile").files[0];
+  let photo = document.getElementById("fPhotoUrl").value.trim();
+  if(photo){
+    if(!(photo.startsWith("https://") || (photo.startsWith("data:image/") && !photo.startsWith("data:image/svg")))){
+      alert("Photo URL must start with https:// (SVG photos are not allowed)."); return;
+    }
+  }
+  if(file){
+    if(file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg")){ alert("SVG photos are not allowed."); return; }
+    if(!file.type.startsWith("image/")){ alert("Please upload an image file."); return; }
+    if(file.size > 5 * 1024 * 1024){ alert("Photo is too large. Please use a photo under 5 MB."); return; }
+  }
+  if(file){
+    if(supabaseClient){
+      const {data: uploadUser} = await supabaseClient.auth.getUser();
+      if(!uploadUser.user){ alert("Please sign in again before uploading a photo."); return; }
+      /* Photos live in the signed-in user's own folder, matching the storage policy. */
+      const path = `${uploadUser.user.id}/${Date.now()}-${file.name.replace(/[^A-Za-z0-9._-]/g, "_")}`;
+      const {error} = await supabaseClient.storage.from("property-photos").upload(path, file);
+      if(error){ alert("Photo upload failed: " + error.message); return; }
+      photo = supabaseClient.storage.from("property-photos").getPublicUrl(path).data.publicUrl;
+    } else {
+      try{ photo = await new Promise((res, rej) => { const r = new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(new Error("read")); r.readAsDataURL(file); }); }
+      catch{ alert("Could not read that photo."); return; }
+    }
+  }
+  const data = {title:document.getElementById("fTitle").value.trim(),price:Number(document.getElementById("fPrice").value),status:document.getElementById("fStatus").value,address:document.getElementById("fAddress").value.trim(),city:document.getElementById("fCity").value.trim(),state:document.getElementById("fState").value.trim().toUpperCase(),zip:document.getElementById("fZip").value.trim(),type:document.getElementById("fType").value,beds:Number(document.getElementById("fBeds").value),baths:Number(document.getElementById("fBaths").value),sqft:Number(document.getElementById("fSqft").value)||null,description:document.getElementById("fDesc").value.trim(),photo:safePhotoUrl(photo),agent:document.getElementById("fAgent").value.trim(),phone:document.getElementById("fPhone").value.trim(),agentEmail:user.email};
+  const editId = document.getElementById("editId").value;
+  if(editId){
+    const original = listings.find(x=>x.id===editId);
+    if(!original || !canManage(original)){ alert("You can only edit your own listings."); return; }
+  }
+  if(supabaseClient){
+    const {data: sessionData} = await supabaseClient.auth.getUser();
+    if(!sessionData.user){ alert("Please sign in again before saving."); showView("auth"); return; }
+    const payload = {...toRow(data), owner_id: sessionData.user.id};
+    const result = editId
+      ? await supabaseClient.from("properties").update(payload).eq("id", editId).select().single()
+      : await supabaseClient.from("properties").insert(payload).select().single();
+    if(result.error){ alert(result.error.message); return; }
+    const row = mapRow(result.data);
+    listings = editId ? listings.map(l=>l.id===editId?row:l) : [row, ...listings];
+  } else {
+    if(editId){ listings = listings.map(l=>l.id===editId?{...l,...data}:l); }
+    else { listings.unshift({id:"local-"+Date.now(), ...data}); }
+    try{ saveLocal("rh_listings", listings); }catch{ alert("Could not save — the photo may be too large for this browser. Try a smaller photo or a photo URL."); return; }
+  }
+  document.getElementById("propertyForm").reset(); document.getElementById("editId").value=""; document.getElementById("formTitle").textContent="Add a property";
+  renderDashboard(); renderBrowse(); alert(editId ? "Listing updated." : "Listing saved. Open it from My listings to copy its share link.");
+}
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-action]"); if(!btn) return;
+  const action = btn.dataset.action;
+  if(action === "view") showView(btn.dataset.view);
+  else if(action === "focus-search") document.getElementById("search").focus();
+  else if(action === "logout") logout();
+  else if(action === "toggle-auth"){ authMode = authMode === "signin" ? "signup" : "signin"; renderAuthArea(); }
+  else if(action === "open") openProperty(btn.dataset.id);
+  else if(action === "edit") editProperty(btn.dataset.id);
+  else if(action === "delete") deleteProperty(btn.dataset.id);
+  else if(action === "copy-link"){
+    const input = document.getElementById("shareLink");
+    if(input) navigator.clipboard.writeText(input.value).then(()=>alert("Link copied!")).catch(()=>alert("Copy this link: " + input.value));
+  }
+});
+document.getElementById("search").addEventListener("input", renderBrowse);
+document.getElementById("maxPrice").addEventListener("input", renderBrowse);
+document.getElementById("minBeds").addEventListener("change", renderBrowse);
+document.getElementById("authForm").addEventListener("submit", handleAuth);
+document.getElementById("propertyForm").addEventListener("submit", saveProperty);
+
+async function loadSupabase(){
+  if(!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  await new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    /* Pinned version, loaded only when a backend is actually configured. */
+    s.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js";
+    s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+  });
+  supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  MODE = "live";
+  const {data} = await supabaseClient.auth.getSession();
+  if(data.session) user = {email: data.session.user.email, name: data.session.user.user_metadata?.name || data.session.user.email};
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    user = session ? {email: session.user.email, name: session.user.user_metadata?.name || session.user.email} : null;
+    renderAuthArea();
+  });
+}
+async function boot(){
+  try{ await loadSupabase(); }catch{ supabaseClient = null; MODE = "demo"; }
+  let liveError = null;
+  if(supabaseClient){
+    const {data, error} = await supabaseClient.from("properties").select("*").order("created_at", {ascending:false});
+    listings = error ? [] : data.map(mapRow);
+    if(error) liveError = error.message;
+  } else {
+    listings = loadLocal("rh_listings", null);
+    if(!listings){ listings = SAMPLES; try{ saveLocal("rh_listings", listings); }catch{} }
+  }
+  document.getElementById("modeNotice").innerHTML = "";
+  const notice = document.createElement("strong");
+  if(liveError){
+    /* Never claim "connected" when the live fetch failed — show the error. */
+    notice.textContent = "Live backend error. ";
+    document.getElementById("modeNotice").appendChild(notice);
+    document.getElementById("modeNotice").append("Listings could not be loaded: " + liveError + " Check that the properties table was created and the Supabase keys are correct.");
+  } else {
+    notice.textContent = MODE==="live" ? "Live backend connected. " : "Demo mode right now. ";
+    document.getElementById("modeNotice").appendChild(notice);
+    document.getElementById("modeNotice").append(MODE==="live"
+      ? "Accounts and listings are saved centrally, and share links work for any customer."
+      : "You can sign up, add listings and test share pages in this browser today. For real multi-realtor accounts, connect the Supabase backend in the README — the code is already wired for it, no rebuild needed.");
+  }
+  renderAuthArea(); renderBrowse();
+  const params = new URLSearchParams(location.search);
+  const shared = decodeShared();
+  if(shared){ renderProperty(shared, "Demo link: this listing travels inside the link itself, so it works on another device. Editing later will not update a link already sent."); showView("property"); }
+  else if(params.get("property")){ await openProperty(params.get("property")); }
+}
+boot();
+</script>
+</body>
+</html>
