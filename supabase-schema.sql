@@ -2,6 +2,9 @@
 -- Setup order: first create a public Storage bucket named "property-photos",
 -- then run this whole file in Supabase: SQL Editor > New query > paste > Run.
 -- It creates the table AND the storage policies, so photo upload works out of the box.
+-- The alter below is a real statement, not just a comment: on an existing
+-- project CREATE TABLE IF NOT EXISTS is a no-op, so this adds the
+-- type-specific details column to a table created before it existed.
 
 create table if not exists public.properties (
   id uuid primary key default gen_random_uuid(),
@@ -19,18 +22,23 @@ create table if not exists public.properties (
   sqft integer,
   description text not null default '',
   photo text,
+  details jsonb not null default '{}'::jsonb,
   agent text not null default '',
   phone text default '',
   agent_email text default '',
   created_at timestamptz not null default now()
 );
 
+alter table public.properties add column if not exists details jsonb not null default '{}'::jsonb;
+
 alter table public.properties enable row level security;
 
--- Anyone can read listings: that is what makes a share link work for a customer
--- who has no account.
+-- Anyone can read PUBLISHED listings: that is what makes a share link work
+-- for a customer who has no account. Draft listings are visible only to
+-- their owner — an anonymous API query must not return Draft rows.
 drop policy if exists "Public read" on public.properties;
-create policy "Public read" on public.properties for select using (true);
+create policy "Public read" on public.properties
+  for select using (status <> 'Draft' OR auth.uid() = owner_id);
 
 -- Only the owner can create / change / delete their own listings.
 drop policy if exists "Owner insert" on public.properties;
