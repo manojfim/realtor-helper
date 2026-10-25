@@ -136,6 +136,7 @@
         <label>Password <input id="authPass" type="password" minlength="6" autocomplete="current-password"></label>
         <button type="submit" id="authSubmit">Sign in</button>
         <button type="button" class="secondary" data-action="toggle-auth" id="authToggle">I need to create an account instead</button>
+        <button type="button" class="secondary" data-action="forgot-password" id="authForgot">Forgot password?</button>
       </form>
     </div>
   </section>
@@ -313,10 +314,14 @@ function renderAuthArea(){
     // sign-in entry point, and it opens this same form when signed out.
   }
   document.getElementById("demoWarning").classList.toggle("hidden", MODE !== "demo");
-  document.getElementById("authTitle").textContent = authMode === "signin" ? "Realtor sign in" : "Create a realtor account";
-  document.getElementById("authSubmit").textContent = authMode === "signin" ? "Sign in" : "Create account";
+  document.getElementById("authTitle").textContent = authMode === "reset" ? "Set a new password" : authMode === "signin" ? "Realtor sign in" : "Create a realtor account";
+  document.getElementById("authSubmit").textContent = authMode === "reset" ? "Set new password" : authMode === "signin" ? "Sign in" : "Create account";
   document.getElementById("authToggle").textContent = authMode === "signin" ? "I need to create an account instead" : "I already have an account";
+  document.getElementById("authToggle").classList.toggle("hidden", authMode === "reset");
+  document.getElementById("authForgot").classList.toggle("hidden", authMode !== "signin");
+  document.getElementById("authEmail").closest("label").classList.toggle("hidden", authMode === "reset");
   document.getElementById("authPass").required = MODE === "live";
+  document.getElementById("authEmail").required = authMode !== "reset";
 }
 function publicListings(){ return listings.filter(isPublic); }
 let statusFilter = "";
@@ -488,6 +493,13 @@ async function handleAuth(e){
   const email = document.getElementById("authEmail").value.trim();
   const name = email.split("@")[0];
   const password = document.getElementById("authPass").value;
+  if(authMode === "reset"){
+    if(!supabaseClient){ alert("Password reset is not available in demo mode."); return; }
+    const {error} = await supabaseClient.auth.updateUser({password});
+    if(error){ alert(error.message); return; }
+    alert("Password updated. Please sign in with your new password.");
+    authMode = "signin"; renderAuthArea(); return;
+  }
   if(supabaseClient){
     const result = authMode === "signin"
       ? await supabaseClient.auth.signInWithPassword({email, password})
@@ -691,7 +703,7 @@ async function saveProperty(e){
   if(pickMarker && pickMap){ pickMap.removeLayer(pickMarker); pickMarker = null; }
   renderDashboard(); renderBrowse(); alert(editId ? "Listing updated." : "Listing saved.");
 }
-document.addEventListener("click", (e) => {
+document.addEventListener("click", async (e) => {
   const btn = e.target.closest("[data-action]"); if(!btn) return;
   const action = btn.dataset.action;
   if(action === "view") showView(btn.dataset.view);
@@ -699,6 +711,15 @@ document.addEventListener("click", (e) => {
   else if(action === "shortcut"){ statusFilter = ""; document.querySelectorAll("[data-action='status-tab']").forEach(b => b.classList.toggle("active", (b.dataset.status||"") === "")); document.getElementById("typeFilter").value = btn.dataset.type || ""; renderBrowse(); document.getElementById("browseGrid").scrollIntoView({behavior:"smooth"}); }
   else if(action === "logout") logout();
   else if(action === "toggle-auth"){ authMode = authMode === "signin" ? "signup" : "signin"; renderAuthArea(); }
+  else if(action === "forgot-password"){
+    const email = document.getElementById("authEmail").value.trim();
+    if(!email){ alert("Enter your email address first, then click Forgot password?"); return; }
+    if(!supabaseClient){ alert("Password reset is not available in demo mode."); return; }
+    const redirectTo = location.href.startsWith("http") ? location.origin + location.pathname : "https://manojfim.github.io/realtor-helper/";
+    const {error} = await supabaseClient.auth.resetPasswordForEmail(email, {redirectTo});
+    if(error){ alert(error.message); return; }
+    alert("Password reset email sent to " + email + ". Check your inbox, then follow the link to set a new password.");
+  }
   else if(action === "open") openProperty(btn.dataset.id);
   else if(action === "share-page") openProperty(btn.dataset.id);
   else if(action === "edit") editProperty(btn.dataset.id);
@@ -754,6 +775,7 @@ async function boot(){
     errBox.classList.add("hidden");
   }
   renderAuthArea(); renderBrowse();
+  if(location.hash.includes("type=recovery")){ authMode = "reset"; renderAuthArea(); showView("auth"); }
   const params = new URLSearchParams(location.search);
   const shared = decodeShared();
   if(shared){
