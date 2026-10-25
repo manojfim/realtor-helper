@@ -17,9 +17,6 @@
   .hero h1{margin:0 0 6px;font-size:36px;line-height:1.15} .hero p{margin:0 0 20px;opacity:.9}
   .searchbar{background:#fff;border-radius:14px;padding:10px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px} @media(max-width:820px){.searchbar{grid-template-columns:1fr 1fr}.searchbar button{grid-column:1/-1}}
   .searchbar input,.searchbar select,form input,form select,form textarea{padding:11px;border:1px solid var(--line);border-radius:10px;width:100%;font:inherit}
-  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0} @media(max-width:760px){.stats{grid-template-columns:1fr 1fr}}
-  .stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;text-align:center}
-  .stat b{font-size:26px;display:block} .stat span{color:var(--muted);font-size:13px}
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0} @media(max-width:760px){.steps{grid-template-columns:1fr}}
   .step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
   .step .num{font-size:32px}
@@ -70,7 +67,6 @@
         <button id="searchBtn">Search</button>
       </div>
     </div>
-    <div class="stats" id="marketStats"></div>
     <div class="steps">
       <div class="step"><div class="num">🔍</div><b>Search</b><div class="meta">Filter by place, price, and size.</div></div>
       <div class="step"><div class="num">📊</div><b>Compare</b><div class="meta">Price, size, and monthly estimate side by side.</div></div>
@@ -285,17 +281,6 @@ function renderAuthArea(){
   document.getElementById("authPass").required = MODE === "live";
 }
 function publicListings(){ return listings.filter(isPublic); }
-function renderMarketStats(){
-  const pub = publicListings();
-  const box = document.getElementById("marketStats"); box.innerHTML = "";
-  const avg = (arr) => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
-  const avgPrice = avg(pub.map(l=>l.price));
-  const avgSqft = avg(pub.filter(l=>l.sqft).map(l=>l.sqft));
-  const avgPpsf = avg(pub.filter(l=>l.sqft).map(l=>l.price/l.sqft));
-  for(const [val, label] of [[String(pub.length), "Properties available"], [avgPrice ? money(Math.round(avgPrice)) : "—", "Average price"], [avgSqft ? Math.round(avgSqft).toLocaleString() + " sq ft" : "—", "Average size"], [avgPpsf ? "$" + Math.round(avgPpsf) + " / sq ft" : "—", "Average price / sq ft"]]){
-    const s = el("div", "stat"); s.appendChild(el("b", "", val)); s.appendChild(el("span", "", label)); box.appendChild(s);
-  }
-}
 function renderBrowse(){
   const q = (document.getElementById("search").value||"").toLowerCase();
   const max = Number(document.getElementById("maxPrice").value||0);
@@ -311,7 +296,6 @@ function renderBrowse(){
   else if(sort === "sqft-desc") shown.sort((a,b)=>(b.sqft||0)-(a.sqft||0));
   document.getElementById("resultCount").textContent = shown.length + (shown.length === 1 ? " property" : " properties");
   document.getElementById("browseEmpty").classList.toggle("hidden", shown.length>0);
-  renderMarketStats();
   const grid = document.getElementById("browseGrid"); grid.innerHTML = "";
   for(const l of shown){
     const card = el("article", "card listing");
