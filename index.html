@@ -8,8 +8,15 @@
 <style>
   :root{--bg:#fff;--card:#fff;--ink:#1a2332;--muted:#667085;--brand:#ea580c;--accent:#e11d48;--line:#e4e7ec}
   *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;overflow-x:hidden}
-  a{color:var(--brand);text-decoration:none} header{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;top:0;z-index:10}
-  header strong{font-size:22px} nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  a{color:var(--brand);text-decoration:none} header{background:#fff;border-bottom:1px solid var(--line);padding:10px 20px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:nowrap;position:sticky;top:0;z-index:10;box-shadow:0 1px 8px rgba(0,0,0,.05)}
+  header strong{font-size:20px;letter-spacing:-.5px;display:flex;align-items:center;gap:10px;white-space:nowrap}
+  .logo-mark{width:36px;height:36px;border-radius:10px;background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;flex:none}
+  .logo-mark svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  nav{display:flex;gap:4px;flex-wrap:nowrap;align-items:center}
+  #authArea{display:flex;gap:8px;align-items:center;white-space:nowrap}
+  nav button.ghost{padding:8px 12px;font-size:14px;border-radius:999px}
+  nav button.ghost:hover{background:#fff7ed;color:var(--brand)}
+  @media(max-width:640px){header{padding:8px 12px} header strong{font-size:17px} .logo-mark{width:32px;height:32px} nav button.ghost{padding:7px 9px;font-size:13px}}
   button,.btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--brand);color:#fff;font-weight:700}
   button.secondary,.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} button.danger{background:#b42318} button.ghost{background:transparent;color:var(--ink)}
   .wrap{max-width:1120px;margin:0 auto;padding:20px}
@@ -59,7 +66,7 @@
 </head>
 <body>
 <header>
-  <strong>🏡 Realtor Helper</strong>
+  <strong><span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-5.5h5V20"/></svg></span>Realtor Helper</strong>
   <nav>
     <button class="ghost" data-action="view" data-view="browse">Properties</button>
     <button class="ghost" data-action="view" data-view="dashboard">For realtors</button>
