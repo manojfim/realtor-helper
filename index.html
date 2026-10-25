@@ -6,18 +6,33 @@
 <title>Realtor Helper — Properties for sale</title>
 <meta name="description" content="Browse properties for sale, compare prices, and contact the listing realtor.">
 <style>
-  :root{--bg:#f5f0e6;--card:#fff;--ink:#1a2332;--muted:#667085;--brand:#0f766e;--accent:#e11d48;--line:#e4e7ec}
-  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  :root{--bg:#fff;--card:#fff;--ink:#1a2332;--muted:#667085;--brand:#ea580c;--accent:#e11d48;--line:#e4e7ec}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;overflow-x:hidden}
   a{color:var(--brand);text-decoration:none} header{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;position:sticky;top:0;z-index:10}
   header strong{font-size:22px} nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   button,.btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;background:var(--brand);color:#fff;font-weight:700}
   button.secondary,.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line)} button.danger{background:#b42318} button.ghost{background:transparent;color:var(--ink)}
   .wrap{max-width:1120px;margin:0 auto;padding:20px}
-  .hero{background-color:#0f2a2d;background-image:linear-gradient(180deg,rgba(15,42,45,.55),rgba(15,42,45,.75)),url("https://images.pexels.com/photos/34401671/pexels-photo-34401671/free-photo-of-herd-of-horses-grazing-near-a-pond-at-dusk.jpeg?auto=compress&cs=tinysrgb&w=1920");background-size:cover;background-position:center;color:#fff;border-radius:20px;padding:44px 28px}
-  .hero h1{margin:0 0 6px;font-size:36px;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.45)} .hero p{margin:0 0 20px;opacity:.95}
+  .hero{background-color:#0f2a2d;background-image:linear-gradient(180deg,rgba(15,42,45,.55),rgba(15,42,45,.75)),url("https://images.pexels.com/photos/34401671/pexels-photo-34401671/free-photo-of-herd-of-horses-grazing-near-a-pond-at-dusk.jpeg?auto=compress&cs=tinysrgb&w=1920");background-size:cover;background-position:center;color:#fff;border-radius:0;padding:72px 20px;width:100vw;margin-left:calc(50% - 50vw);text-align:center}
+  .hero-inner{max-width:820px;margin:0 auto}
+  .hero h1{margin:0 0 24px;font-size:40px;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.45)} .hero p{margin:0 0 20px;opacity:.95}
   .hero-credit{font-size:12px;opacity:.75;margin-top:14px}
-  .searchbar{background:#fff;border-radius:14px;padding:10px;display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px} @media(max-width:820px){.searchbar{grid-template-columns:1fr 1fr}.searchbar button{grid-column:1/-1}}
-  .searchbar input,.searchbar select,form input,form select,form textarea{padding:11px;border:1px solid var(--line);border-radius:10px;width:100%;font:inherit}
+  .search-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+  .search-tabs button{background:transparent;color:#fff;border:0;border-radius:999px;padding:8px 16px;font-weight:700}
+  .search-tabs button.active{background:#fff;color:var(--ink)}
+  .searchbar{background:rgba(255,255,255,.96);border-radius:999px;padding:8px;display:grid;grid-template-columns:1fr auto;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.25)} @media(max-width:820px){.searchbar{border-radius:20px;grid-template-columns:1fr}.searchbar button{grid-column:1/-1}}
+  .searchbar input{border:0}
+  .shortcuts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0} @media(max-width:760px){.shortcuts{grid-template-columns:1fr 1fr}}
+  .shortcut{border:1px solid var(--line);border-radius:16px;padding:20px;text-align:left;background:linear-gradient(180deg,rgba(15,42,45,.05),#fff);cursor:pointer}
+  .shortcut b{display:block;font-size:18px} .shortcut span{color:var(--muted);font-size:14px}
+  .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:32px 0 8px}
+  .section-head h2{margin:0;font-size:26px} .section-head p{margin:4px 0 0;color:var(--muted)}
+  .listing{box-shadow:0 2px 12px rgba(0,0,0,.08)}
+  .listing img{height:220px}
+  .listing .price{font-size:26px}
+  .badge.status-pill{background:#1e3a8a;color:#fff}
+  .searchbar input,form input,form select,form textarea{padding:11px;border:1px solid var(--line);border-radius:10px;width:100%;font:inherit}
+  .searchbar input{border:0;border-radius:999px}
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0} @media(max-width:760px){.steps{grid-template-columns:1fr}}
   .step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
   .step .num{font-size:32px}
@@ -58,30 +73,45 @@
   <!-- CUSTOMER HOME / BROWSE -->
   <section id="view-browse">
     <div class="hero">
-      <h1>Find your next property</h1>
-      <p>Search properties, compare at a glance, and contact the realtor directly.</p>
-      <div class="searchbar">
-        <input id="search" aria-label="Search city, address, or ZIP" placeholder="City, address, or ZIP">
-        <select id="typeFilter" aria-label="Property type"><option value="">All types</option><option>House</option><option>Apartment</option><option>Condo</option><option>Townhome</option><option>Land</option><option>Multi-family</option></select>
-        <input id="maxPrice" type="number" aria-label="Maximum price" placeholder="Max price">
-        <select id="minBeds" aria-label="Minimum bedrooms"><option value="">Any beds</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-        <button id="searchBtn">Search</button>
+      <div class="hero-inner">
+        <h1>Find your next property</h1>
+        <div class="search-tabs" role="tablist" aria-label="Listing status">
+          <button class="active" data-action="status-tab" data-status="">All</button>
+          <button data-action="status-tab" data-status="For sale">For sale</button>
+          <button data-action="status-tab" data-status="Pending">Pending</button>
+          <button data-action="status-tab" data-status="Sold">Sold</button>
+        </div>
+        <div class="searchbar">
+          <input id="search" aria-label="Search city, address, or ZIP" placeholder="City, address, or ZIP">
+          <button id="searchBtn">Search</button>
+        </div>
+        <div class="hero-credit">Ranch scenery: herd of horses grazing near a pond — photo via Pexels</div>
       </div>
-      <div class="hero-credit">Ranch scenery: herd of horses grazing near a pond — photo via Pexels</div>
     </div>
-    <div class="steps">
-      <div class="step"><div class="num">🔍</div><b>Search</b><div class="meta">Filter by place, price, and size.</div></div>
-      <div class="step"><div class="num">📊</div><b>Compare</b><div class="meta">Price, size, and monthly estimate side by side.</div></div>
-      <div class="step"><div class="num">✉️</div><b>Contact</b><div class="meta">Reach the listing realtor from the property page.</div></div>
+    <div class="shortcuts">
+      <button class="shortcut" data-action="shortcut" data-type=""><b>🏠 Browse all</b><span>Every property listed here</span></button>
+      <button class="shortcut" data-action="shortcut" data-type="House"><b>🏡 Houses</b><span>Single-family homes</span></button>
+      <button class="shortcut" data-action="shortcut" data-type="Land"><b>🌾 Land</b><span>Lots and acreage</span></button>
+      <button class="shortcut" data-action="view" data-view="dashboard"><b>🤝 For realtors</b><span>Sign in and add a property</span></button>
     </div>
-    <div class="filters" aria-label="Sort listings">
+    <div class="section-head">
+      <div><h2>Properties for you</h2><p>Browse every published listing, newest first by default.</p></div>
       <span><b id="resultCount"></b></span>
+    </div>
+    <div class="filters" aria-label="Filter and sort listings">
+      <select id="typeFilter" aria-label="Property type"><option value="">All types</option><option>House</option><option>Apartment</option><option>Condo</option><option>Townhome</option><option>Land</option><option>Multi-family</option></select>
+      <input id="maxPrice" type="number" aria-label="Maximum price" placeholder="Max price" style="max-width:180px">
+      <select id="minBeds" aria-label="Minimum bedrooms"><option value="">Any beds</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
       <select id="sortBy" aria-label="Sort listings" style="margin-left:auto;max-width:220px">
         <option value="newest">Newest first</option><option value="price-asc">Price: low to high</option><option value="price-desc">Price: high to low</option><option value="sqft-desc">Largest first</option>
       </select>
     </div>
     <div id="browseGrid" class="grid"></div>
     <p id="browseEmpty" class="hidden">No properties match that search yet.</p>
+    <div class="section-head">
+      <div><h2>For realtors</h2><p>Save a property once, then share it as a link with any customer.</p></div>
+      <button data-action="view" data-view="dashboard">For realtors</button>
+    </div>
   </section>
 
   <!-- PROPERTY DETAIL -->
@@ -181,7 +211,7 @@
     </div>
   </section>
 </main>
-<footer>Realtor Helper</footer>
+<footer>Realtor Helper — browse properties, and realtors can sign in to save and share their own listings.</footer>
 
 <script>
 const SUPABASE_URL = "https://hldupdnyighbqiczannf.supabase.co";
@@ -283,13 +313,16 @@ function renderAuthArea(){
   document.getElementById("authPass").required = MODE === "live";
 }
 function publicListings(){ return listings.filter(isPublic); }
+let statusFilter = "";
 function renderBrowse(){
   const q = (document.getElementById("search").value||"").toLowerCase();
   const max = Number(document.getElementById("maxPrice").value||0);
   const beds = Number(document.getElementById("minBeds").value||0);
   const type = document.getElementById("typeFilter").value;
   const sort = document.getElementById("sortBy").value;
-  let shown = publicListings().filter(l =>
+  const browseSource = statusFilter === "Sold" ? listings.filter(l => l.status !== "Draft") : publicListings();
+  let shown = browseSource.filter(l =>
+    (!statusFilter || l.status===statusFilter) &&
     (!q || [l.title,l.address,l.city,l.state,l.zip].join(" ").toLowerCase().includes(q)) &&
     (!max || l.price<=max) && (!beds || l.beds>=beds) && (!type || l.type===type));
   if(sort === "newest") shown.sort((a,b)=>(new Date(b.created_at||0) - new Date(a.created_at||0)));
@@ -302,12 +335,15 @@ function renderBrowse(){
   for(const l of shown){
     const card = el("article", "card listing");
     const img = document.createElement("img"); img.src = safePhotoUrl(l.photo); img.alt = l.title; img.loading = "lazy"; img.onerror = () => { img.style.display = "none"; }; card.appendChild(img);
-    const badge = el("div"); const b = el("span", "badge"); b.textContent = String(l.id).startsWith("sample-") ? "Sample · " + l.status : l.status; badge.appendChild(b); card.appendChild(badge);
     card.appendChild(el("div", "price", money(l.price)));
-    const est = el("div", "meta", "Est. " + money(Math.round(monthlyEstimate(l.price, 20, 6.5, 30))) + " / mo");
-    card.appendChild(est);
-    const title = el("div"); const st = document.createElement("strong"); st.textContent = l.title; title.appendChild(st); card.appendChild(title);
-    card.appendChild(el("div", "meta", cardMeta(l)));
+    const badge = el("div"); const b = el("span", "badge status-pill"); b.textContent = String(l.id).startsWith("sample-") ? "Sample · " + l.status : l.status; badge.appendChild(b); card.appendChild(badge);
+    const specs = l.type === "Land"
+      ? `${(l.details||{}).lotAcres ?? "—"} acres${(l.details||{}).zoning ? " · " + (l.details||{}).zoning : ""}`
+      : `${l.beds} bd · ${l.baths} ba${l.sqft ? " · " + l.sqft.toLocaleString() + " sq ft" : ""}`;
+    card.appendChild(el("div", "", specs));
+    card.appendChild(el("div", "", l.address));
+    card.appendChild(el("div", "meta", `${l.city}, ${l.state} ${l.zip}`));
+    card.appendChild(el("div", "meta", l.title));
     const btn = el("button"); btn.dataset.action = "open"; btn.dataset.id = l.id; btn.textContent = "View property"; card.appendChild(btn);
     grid.appendChild(card);
   }
@@ -653,6 +689,8 @@ document.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]"); if(!btn) return;
   const action = btn.dataset.action;
   if(action === "view") showView(btn.dataset.view);
+  else if(action === "status-tab"){ statusFilter = btn.dataset.status || ""; document.querySelectorAll("[data-action='status-tab']").forEach(b => b.classList.toggle("active", b === btn)); renderBrowse(); }
+  else if(action === "shortcut"){ statusFilter = ""; document.querySelectorAll("[data-action='status-tab']").forEach(b => b.classList.toggle("active", (b.dataset.status||"") === "")); document.getElementById("typeFilter").value = btn.dataset.type || ""; renderBrowse(); document.getElementById("browseGrid").scrollIntoView({behavior:"smooth"}); }
   else if(action === "logout") logout();
   else if(action === "toggle-auth"){ authMode = authMode === "signin" ? "signup" : "signin"; renderAuthArea(); }
   else if(action === "open") openProperty(btn.dataset.id);
