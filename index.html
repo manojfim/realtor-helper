@@ -490,6 +490,12 @@ async function setStatus(id, status){
 }
 async function handleAuth(e){
   e.preventDefault();
+  const submitBtn = document.getElementById("authSubmit");
+  if(submitBtn){
+    submitBtn.disabled = true;
+    submitBtn.textContent = authMode === "signin" ? "Signing in…" : authMode === "signup" ? "Creating account…" : submitBtn.textContent;
+  }
+  try{
   const email = document.getElementById("authEmail").value.trim();
   const name = email.split("@")[0];
   const password = document.getElementById("authPass").value;
@@ -501,9 +507,15 @@ async function handleAuth(e){
     authMode = "signin"; renderAuthArea(); return;
   }
   if(supabaseClient){
-    const result = authMode === "signin"
-      ? await supabaseClient.auth.signInWithPassword({email, password})
-      : await supabaseClient.auth.signUp({email, password, options:{data:{name}}});
+    let result;
+    try{
+      result = authMode === "signin"
+        ? await supabaseClient.auth.signInWithPassword({email, password})
+        : await supabaseClient.auth.signUp({email, password, options:{data:{name}}});
+    }catch(err){
+      alert(err && err.message ? err.message : "Something went wrong. Please try again.");
+      return;
+    }
     if(result.error){ alert(result.error.message); return; }
     if(!result.data.session){ alert("Check your email to confirm your account, then sign in."); authMode = "signin"; renderAuthArea(); return; }
     user = {email: result.data.user.email, name: result.data.user.user_metadata?.name || name};
@@ -512,6 +524,12 @@ async function handleAuth(e){
     try{ saveLocal("rh_user", user); }catch{ alert("Could not save this account in this browser."); return; }
   }
   renderAuthArea(); showView("dashboard");
+  }finally{
+    if(submitBtn){
+      submitBtn.disabled = false;
+      submitBtn.textContent = authMode === "reset" ? "Set new password" : authMode === "signin" ? "Sign in" : "Create account";
+    }
+  }
 }
 async function logout(){
   if(supabaseClient) await supabaseClient.auth.signOut();
