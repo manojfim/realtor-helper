@@ -1686,7 +1686,7 @@ let backendStatus = (SUPABASE_URL && SUPABASE_ANON_KEY) ? "connecting" : "unconf
 let authMode = "signin";
 // Redirect targets allow-listed in the Supabase Auth settings. Anything else is
 // rejected by GoTrue, so auth emails must always point at one of these exactly.
-const AUTH_REDIRECT_ALLOWLIST = ["https://manojfim.github.io/realtor-helper/", "https://manojfim.github.io/realtor-helper"];
+const AUTH_REDIRECT_ALLOWLIST = ["https://r-helper.github.io/", "https://r-helper.github.io"];
 const AUTH_TIMEOUT_MS = 15000;
 const SUPABASE_SCRIPT_TIMEOUT_MS = 10000;
 const LISTINGS_TIMEOUT_MS = 15000;
@@ -1695,7 +1695,7 @@ const MSG_UNAVAILABLE = "The account service could not be reached. Please check 
 const MSG_CONNECTING = "Still connecting to the account service — please try again in a moment.";
 const MSG_GENERIC = "Something went wrong. Please try again.";
 function authRedirectUrl(){
-  if(location.protocol === "https:" && location.hostname === "manojfim.github.io"){
+  if(location.protocol === "https:" && location.hostname === "r-helper.github.io"){
     const candidate = location.origin + location.pathname.replace(/index\.html$/, "");
     if(AUTH_REDIRECT_ALLOWLIST.includes(candidate)) return candidate;
   }
