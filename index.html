@@ -2338,6 +2338,13 @@ function renderAuthArea(){
     // When signed out both containers stay empty on purpose: "For realtors" is the
     // single sign-in entry point and there is no second header "Sign in" button.
   }
+  // Header label follows auth state: signed-in realtors go straight to their
+  // listings, so the header "For realtors" button reads "My listings" for them.
+  // Only the header nav buttons are relabelled — the home-page shortcut tile
+  // and "For realtors" band keep their entry-point wording for visitors.
+  document.querySelectorAll("header .nav__link[data-view='dashboard']").forEach(function(btn){
+    btn.textContent = user ? "My listings" : "For realtors";
+  });
   // The old demo-mode password caveat and the element that carried it are both GONE.
   // Task 1 removed the fabricated-local-account fallback, so the only path that could
   // ever show it was the unconfigured branch, which this deployment cannot reach:
