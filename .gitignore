@@ -1,0 +1,4 @@
+.agents/
+.DS_Store
+index.html.backup-*
+HANDOFF-TO-NEXT-AGENT.md
