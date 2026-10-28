@@ -14,7 +14,7 @@
 <meta name="description" content="Browse properties for sale, compare prices, and contact the listing realtor.">
 <meta property="og:title" content="Realtor Helper — Properties for sale">
 <meta property="og:description" content="Browse properties for sale, compare prices, and contact the listing realtor.">
-<meta property="og:url" content="https://r-helper.github.io/">
+<meta property="og:url" content="https://realtorhelper.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://images.pexels.com/photos/34401671/pexels-photo-34401671/free-photo-of-herd-of-horses-grazing-near-a-pond-at-dusk.jpeg?auto=compress&cs=tinysrgb&w=1200">
 <meta property="og:image:alt" content="Horses grazing near a pond at dusk">
@@ -1696,7 +1696,7 @@ let backendStatus = (SUPABASE_URL && SUPABASE_ANON_KEY) ? "connecting" : "unconf
 let authMode = "signin";
 // Redirect targets allow-listed in the Supabase Auth settings. Anything else is
 // rejected by GoTrue, so auth emails must always point at one of these exactly.
-const AUTH_REDIRECT_ALLOWLIST = ["https://r-helper.github.io/", "https://r-helper.github.io"];
+const AUTH_REDIRECT_ALLOWLIST = ["https://realtorhelper.github.io/", "https://realtorhelper.github.io"];
 const AUTH_TIMEOUT_MS = 15000;
 const SUPABASE_SCRIPT_TIMEOUT_MS = 10000;
 const LISTINGS_TIMEOUT_MS = 15000;
@@ -1705,7 +1705,7 @@ const MSG_UNAVAILABLE = "The account service could not be reached. Please check 
 const MSG_CONNECTING = "Still connecting to the account service — please try again in a moment.";
 const MSG_GENERIC = "Something went wrong. Please try again.";
 function authRedirectUrl(){
-  if(location.protocol === "https:" && location.hostname === "r-helper.github.io"){
+  if(location.protocol === "https:" && location.hostname === "realtorhelper.github.io"){
     const candidate = location.origin + location.pathname.replace(/index\.html$/, "");
     if(AUTH_REDIRECT_ALLOWLIST.includes(candidate)) return candidate;
   }
